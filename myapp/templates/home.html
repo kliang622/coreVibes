@@ -1,0 +1,77 @@
+<!-- home.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href='https://fonts.googleapis.com/css?family=Inconsolata' rel='stylesheet'>
+    <link href='https://fonts.googleapis.com/css?family=Lexend' rel='stylesheet'>
+    <title>Home Page</title>
+
+    <style>
+        body {
+            font-family: 'Inconsolata', sans-serif;
+            margin: 0;
+        }
+
+        .sidenav {
+            height: 100%;
+            width: 250px;
+            position: fixed;
+            z-index: 1;
+            top: 0;
+            left: 0;
+            background-color: #111;
+            padding-top: 20px;
+        }
+
+        .sidenav a {
+            padding: 15px 8px 15px 32px;
+            text-decoration: none;
+            font-family: sans-serif;
+            font-size: 18px;
+            color: #818181;
+            display: block;
+            transition: 0.3s;
+        }
+
+        .sidenav a:hover {
+            color: #f1f1f1;
+        }
+
+        .content {
+            margin-left: 250px;
+            padding: 20px;
+        }
+
+        /* Responsive Design */
+        @media screen and (max-height: 450px) {
+            .sidenav {
+                padding-top: 15px;
+            }
+            .sidenav a {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Side Navigation Bar -->
+<div class="sidenav">
+    <a href="#">Home</a>
+    <h3> see trends by:</h3>
+    <a href="#">seasons</a>
+    <a href="#">worldwide</a>
+    <a href="#">popular by year</a>
+    <a href="#">hottest songs by year</a>
+</div>
+
+<!-- Content Area -->
+<div class="content">
+    <h1>coreVibes</h1>
+    <p>This is the home page content. You can add more sections and customize as needed.</p>
+</div>
+
+</body>
+</html>
