@@ -29,7 +29,9 @@ DEBUG = True
 
 ALLOWED_HOSTS = [
     'cs179g-fall-2023-01.cs.ucr.edu', 
-    '3.16.159.216'
+    '3.16.159.216', 
+    'localhost',
+    '127.0.0.1'
 ]
 
 
