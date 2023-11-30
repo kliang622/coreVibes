@@ -1,0 +1,21 @@
+<!-- templates/data_by_year.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data for Year {{ year }}</title>
+</head>
+<body>
+
+<h1>Data for Year {{ year }}</h1>
+
+<ul>
+    {% for entry in data_for_year %}
+        <li>{{ entry.field_name }}</li>
+        <!-- Replace field_name with actual field names from your model -->
+    {% endfor %}
+</ul>
+
+</body>
+</html>
