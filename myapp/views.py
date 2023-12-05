@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from .models import Marker
 from django.http import HttpResponse
 import mysql.connector
 
@@ -56,3 +57,32 @@ def hotSong(request, year):
     data_for_year = db_cursor.fetchall()
 
     return render(request, 'hotSong.html', {'year': year, 'data_for_year': data_for_year})
+
+
+# def world(request):
+#     db_connection = mysql.connector.connect(user="hpham", password="halpal")
+#     db_cursor = db_connection.cursor()
+#     db_cursor.execute("USE cs179g;")
+
+#     country_id = "United States"  # Replace this with the actual country or parameter you want
+
+#     query = "SELECT * FROM ArtistByRegion WHERE region = %s;"
+#     db_cursor.execute(query, (country_id,))
+    
+#     country_data = db_cursor.fetchone()
+
+#     if country_data:
+#         # Adjust this part based on the actual structure of your data
+#         response_data = {
+#             'region': country_data[0],
+#             'field1': country_data[1],
+#             'field2': country_data[2],
+#             # Add more fields as needed
+#         }
+#         return JsonResponse(response_data)
+#     else:
+#         return JsonResponse({'error': 'Country not found'}, status=404)
+
+def world(request):
+    markers = Marker.objects.all()
+    return render(request, 'world.html', {'markers': markers})

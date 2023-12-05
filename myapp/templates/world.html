@@ -1,4 +1,4 @@
-<!-- map_app/templates/map_template.html -->
+<!-- world_map.html -->
 
 <!DOCTYPE html>
 <html lang="en">
@@ -6,41 +6,55 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Interactive World Map</title>
+    <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <!-- Leaflet JavaScript -->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
     <style>
-        #map {
+        #world-map {
             height: 500px;
         }
     </style>
 </head>
 <body>
+    <div id="world-map"></div>
+    <div id="country-info"></div>
 
-<div id="map"></div>
+    <script>
+        const countriesData = JSON.parse('{{ countries|safe }}');  // Convert Django QuerySet to JavaScript object
 
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet-ajax/dist/leaflet.ajax.js"></script>
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        const map = L.map('world-map').setView([0, 0], 2);  // Initial view
 
-<script>
-    var map = L.map('map').setView([0, 0], 2);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
-    }).addTo(map);
-
-    $.ajax({
-        url: '{% url "get_countries" %}',
-        type: 'GET',
-        dataType: 'json',
-        success: function (data) {
-            L.geoJSON(data, {
-                onEachFeature: function (feature, layer) {
-                    layer.bindPopup("<b>" + feature.properties.name + "</b><br>" + feature.properties.data);
-                }
-            }).addTo(map);
-        }
-    });
-</script>
-
+        // Add markers for each country
+        countriesData.forEach(country => {
+            const marker = L.marker([country.latitude, country.longitude])
+                .addTo(map)
+                .on('click', () => {
+                    // When a marker is clicked, send a request to Django to get data for the clicked country
+                    $.ajax({
+                        url: '/get_country_data/',
+                        method: 'GET',
+                        data: { country_id: country.id },
+                        success: (data) => {
+                            // Update the content of the #country-info div with the retrieved data
+                            $('#country-info').html(`
+                                <h2>Data for ${country.name}</h2>
+                                <p>Region: ${data.region}</p>
+                                <p>Field 1: ${data.field1}</p>
+                                <p>Field 2: ${data.field2}</p>
+                            `);
+                        },
+                        error: (error) => {
+                            console.error('Error fetching country data:', error);
+                        }
+                    });
+                });
+        });
+    </script>
 </body>
 </html>

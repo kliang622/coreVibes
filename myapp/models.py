@@ -1,8 +1,11 @@
 from django.db import models
 
-# class Season(models.Model):
-#     name = models.CharField(max_length=100)
-#     information = models.TextField()
+class Marker(models.Model):
+    country = models.CharField(max_length=255)
+    artist = models.CharField(max_length=255)
+    song_count = models.IntegerField()
+    latitude = models.FloatField()
+    longitude = models.FloatField()
 
-#     def __str__(self):
-#         return self.name
+    class Meta:
+        db_table = 'custom_marker_table'
