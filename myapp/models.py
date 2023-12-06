@@ -9,3 +9,11 @@ class Marker(models.Model):
 
     class Meta:
         db_table = 'custom_marker_table'
+
+
+
+class ArtistSentiment(models.Model):
+    artist = models.CharField(max_length=255)
+    PositiveCount = models.IntegerField()
+    NeutralCount = models.IntegerField()
+    NegativeCount = models.IntegerField()

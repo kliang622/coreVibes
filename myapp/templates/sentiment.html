@@ -1,0 +1,56 @@
+<!-- sentiment_analysis_app/templates/search_artist.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Artist</title>
+    <!-- Include any necessary CSS or styling links here -->
+</head>
+<body>
+    
+    <form method="post" action="{% url 'search_artist' %}">
+        {% csrf_token %}
+        <label for="artist_name">Artist Name:</label>
+        <input type="text" name="artist_name" id="artist_name" required>
+        <input type="submit" value="Search">
+    </form>
+
+    {% if artist_name %}
+        <h2>Results for {{ artist_name }}</h2>
+        <div id="pie-chart"></div>
+
+        <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+        <script>
+            var positive_percentage = '{{ positive_percentage }}';
+            var neutral_percentage = '{{ neutral_percentage }}';
+            var negative_percentage = '{{ negative_percentage }}';
+
+            // Check for NaN or undefined values and replace with 0
+            positive_percentage = isNaN(positive_percentage) ? 0 : positive_percentage;
+            neutral_percentage = isNaN(neutral_percentage) ? 0 : neutral_percentage;
+            negative_percentage = isNaN(negative_percentage) ? 0 : negative_percentage;
+
+            document.write(positive_percentage + ',' + negative_percentage + ',' + neutral_percentage);
+            
+            var data = [{
+                values: [positive_percentage, neutral_percentage, negative_percentage],
+                labels: ['Positive', 'Neutral', 'Negative'],
+                type: 'pie'
+            }];
+
+            var layout = {
+                height: 400,
+                width: 500
+            };
+
+            Plotly.newPlot('pie-chart', data, layout);
+
+            console.log(negative_percentage); 
+
+        </script>
+    {% endif %}
+
+</body>
+</html>

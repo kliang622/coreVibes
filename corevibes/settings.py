@@ -84,7 +84,12 @@ WSGI_APPLICATION = 'corevibes.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        # 'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': 'cs179g', 
+        'USER': 'hpham',   # Your MySQL user
+        'PASSWORD': 'halpal',  # Your MySQL password
+        'HOST': 'localhost',
+        'PORT': '3306',
     }
 }
 

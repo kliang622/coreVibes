@@ -10,5 +10,6 @@ urlpatterns = [
     path('myapp/', views.season, name='season'),
     path('myapp/season', views.season, name='season'), 
     path('myapp/world', views.world, name='world'),
+    path('myapp/search', views.search_artist, name='search_artist'),
     # path('hotSong/<int:year>/', hotSong, name='hotSong'),
 ]
