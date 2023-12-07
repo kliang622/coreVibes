@@ -33,7 +33,7 @@
         .default-font{
             color: #FFF9E8
         }
-        .sidenav a {
+        /* .sidenav a {
             padding: 15px 8px 15px 32px;
             text-decoration: none;
             font-family: sans-serif;
@@ -45,7 +45,7 @@
 
         .sidenav a:hover {
             color: #FFFFFF;
-        }
+        } */
 
         .content {
             margin-left: 250px;
@@ -66,14 +66,16 @@
 <body>
 
 <!-- Side Navigation Bar -->
-<div class="sidenav">
+<!-- <div class="sidenav">
     <a href="#">Home</a>
     <h3 class="logo-color"> see trends by:</h3>
     <a href="{% url 'season' %}">seasons</a>
     <a href="{% url 'world' %}">worldwide</a>
     <a href=""> trends over years</a>
     <a href="{% url 'search_artist' %}">sentiments</a>
-</div>
+</div> -->
+
+{% include 'navbar.html' %}
 
 <!-- Content Area -->
 <div class="content">

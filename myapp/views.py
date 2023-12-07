@@ -13,6 +13,11 @@ from .models import ArtistSentiment
 import math
 
 
+#timeline 
+from .models import TimelineArtist, TimelineSong
+from django.conf import settings
+from django.conf.urls.static import static
+
 def home(request):
     return render(request, 'home.html')
 
@@ -45,24 +50,6 @@ def season(request):
                                                             'summer_data': summer_data,
                                                             'autumn_data': fall_data,
                                                             'winter_data': winter_data})
-    # except Exception as e:
-    #     return HttpResponse(f"An error occurred: {str(e)}")
-    # finally:
-    #     # Close the database connection in the finally block to ensure it's always closed
-    #     if db_connection.is_connected():
-    #         db_cursor.close()
-    #         db_connection.close()
-
-def hotSong(request, year):
-    db_connection = mysql.connector.connect(user="hpham", password="halpal")
-    db_cursor = db_connection.cursor()
-    db_cursor.execute("USE cs179g;")
-
-    query = "SELECT field_name1, field_name2 FROM HottestSongsPerYear WHERE year = %s;"
-    db_cursor.execute(query, (year,))
-    data_for_year = db_cursor.fetchall()
-
-    return render(request, 'hotSong.html', {'year': year, 'data_for_year': data_for_year})
 
 
 # def world(request):
@@ -107,6 +94,11 @@ def calculate_sentiment_percentages(artists):
     negative_percentage = (negative_count / total) * 100 if total != 0 else 0
 
 
+    print("Positive Percentage:", positive_count)
+    print("Neutral Percentage:", neutral_count)
+    print("Negative Percentage:", negative_count)
+
+
     # After calculating sentiment percentages
     print("Positive Percentage:", positive_percentage)
     print("Neutral Percentage:", neutral_percentage)
@@ -126,20 +118,78 @@ def search_artist(request):
             db_connection = mysql.connector.connect(user="hpham", password="halpal", database="cs179g")
             db_cursor = db_connection.cursor()
 
-            query = "SELECT * FROM ArtistSentiment WHERE artist LIKE %s;"
-            db_cursor.execute(query, ('%' + artist_name + '%',))
-            artists = [ArtistSentiment(*row) for row in db_cursor.fetchall()]
+            query = "SELECT artist, NegativeCount, NeutralCount, PositiveCount FROM ArtistSentiment WHERE artist LIKE %s;"
+            db_cursor.execute(query, ['%' + artist_name + '%'])
+            rows = db_cursor.fetchall()
+
+            artists = [ArtistSentiment(*row) for row in rows]
+
+            # Print the executed query and fetched rows
+            print("Executed Query:", query % ('%' + artist_name + '%'))
+            print("Fetched Rows:", rows)
+
+            # Print the artists list
+            print("Artists List:", artists)
 
             # Implement sentiment analysis logic and prepare data for the pie chart
             positive_percentage, neutral_percentage, negative_percentage = calculate_sentiment_percentages(artists)
 
+            # Print sentiment percentages
+            print("Positive Percentage from function:", positive_percentage)
+            print("Neutral Percentage from function:", neutral_percentage)
+            print("Negative Percentage from function:", negative_percentage)
 
+            # Render the template
             return render(request, 'sentiment.html', {
                 'artist_name': artist_name,
                 'positive_percentage': positive_percentage,
                 'neutral_percentage': neutral_percentage,
-                'negative_percentage': negative_percentage, 
+                'negative_percentage': negative_percentage,
             })
     else:
         form = SearchForm()
     return render(request, 'sentiment.html', {'form': form})
+
+
+def timelineView(request): 
+    db_connection = mysql.connector.connect(user="hpham", password="halpal", database="cs179g")
+    db_cursor = db_connection.cursor()
+
+    # Execute your SQL queries here
+    querySong = "SELECT artist, title, TrendCount FROM HottestSongsPerYear WHERE year = %s ORDER BY TrendCount DESC LIMIT 1"
+    queryArtist = """
+        SELECT *
+        FROM (
+            SELECT artist, TrendCount AS streams
+            FROM HottestSongsPerYear
+            WHERE year = %s
+            UNION ALL 
+            SELECT artist, SongCount AS streams
+            FROM MostPopularPerYear 
+            WHERE year = %s
+        ) AS combinedResults 
+        ORDER BY streams DESC 
+        LIMIT 1; 
+    """
+
+    years = range(2017, 2021)  
+
+    timeline_data = []
+    for year in years:
+        db_cursor.execute(queryArtist, (year, year))
+        top_artist_result = db_cursor.fetchone()
+        top_artist = top_artist_result[0] if top_artist_result else 'N/A'
+        
+        db_cursor.execute(querySong, (year,))
+        top_song_result = db_cursor.fetchone()
+        top_song_artist = top_song_result[0] if top_song_result else 'N/A'
+        top_song_title = top_song_result[1] if top_song_result else 'N/A'
+
+        timeline_data.append({
+            'year': year,
+            'top_artist': top_artist,
+            'top_song_artist': top_song_artist,
+            'top_song_title': top_song_title,
+        })
+
+    return render(request, 'timeline.html', {'timeline_data': timeline_data})

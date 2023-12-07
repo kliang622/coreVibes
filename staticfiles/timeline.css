@@ -1,0 +1,26 @@
+:root{
+    --primary-color: green  ; 
+}
+
+*{
+    margin:0; 
+    padding:0; 
+
+    box-sizing: border-box;
+    font-family: 'popins', sans-serif;
+}
+
+.hints{
+    text-align: center;
+    padding: 1.4rem 0; 
+    background-color: whitesmoke;
+    font-weight: 600; 
+}
+
+mark{
+    padding: .2rem .7rem; 
+    border-radius: .4rem;
+    background-color: red;
+
+}
+
