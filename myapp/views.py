@@ -19,9 +19,11 @@ from django.conf.urls.static import static
 
 # world
 from .models import ArtistByRegion
+from .forms import SearchRegion
 from django.views.decorators.csrf import csrf_exempt
 import json
 import os
+
 
 def home(request):
     return render(request, 'home.html')
@@ -57,45 +59,34 @@ def season(request):
                                                             'winter_data': winter_data})
 
 
-def proxy_geojson(request):
-    url = 'https://naciscdn.org/naturalearth/110m/cultural/ne_110m_admin_0_countries.geojson'
-    response = requests.get(url)
-    data = response.json()
-    return JsonResponse(data)
-
-def local_geojson(request):
-    geojson_path = os.path.join(os.path.dirname(__file__), 'static', 'geojson', 'ne_110m_admin_0_countries.geojson')
-
-    with open(geojson_path, 'r') as f:
-        data = json.load(f)
-
-    return JsonResponse(data)
-
-@csrf_exempt
 def world(request):
-    response_data = {'error': 'No data found for the specified country'}  # Initialize with a default value
+    search_result = None
 
     if request.method == 'POST':
-        country_code = request.POST.get('country_code')
+        form = SearchRegion(request.POST)
+        if form.is_valid():
+            region_name = form.cleaned_data['region_name']
+            db_connection = mysql.connector.connect(user="hpham", password="halpal", database="cs179g")
+            db_cursor = db_connection.cursor()
 
-        db_connection = mysql.connector.connect(user="hpham", password="halpal", database="cs179g")
-        db_cursor = db_connection.cursor()
+            # Perform the search query
+            query = (
+                "SELECT region, artist, MAX(song_count) AS max_song_count "
+                "FROM ArtistByRegion "
+                "WHERE region LIKE %s "
+                "GROUP BY region"
+            )
+            db_cursor.execute(query, ['%' + region_name + '%'])
+            search_result = db_cursor.fetchall()
 
-        db_cursor.execute("SELECT * FROM ArtistByRegion WHERE country = %s", (country_code,))
-        row = db_cursor.fetchone()
+            # Print the search result to the console
+            print(f"Search result: {search_result}")
 
-        if row:
-            response_data = {
-                'country': row[0],
-                'artist': row[1],
-                'song_count': row[2],
-            }
-            return JsonResponse(response_data)
-        else:
-            return JsonResponse(response_data)
+    else:
+        form = SearchRegion()
 
-    return render(request, "world.html", {'response_data': response_data})
-
+    context = {'form': form, 'search_result': search_result}
+    return render(request, 'world.html', context)
 
 def calculate_sentiment_percentages(artists):
     positive_count = sum(artist.PositiveCount if artist.PositiveCount is not None and not math.isnan(artist.PositiveCount) and artist.PositiveCount != float('inf') else 0 for artist in artists)
@@ -208,3 +199,4 @@ def timelineView(request):
         })
 
     return render(request, 'timeline.html', {'timeline_data': timeline_data})
+

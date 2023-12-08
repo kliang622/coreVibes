@@ -1,112 +1,42 @@
 <!-- world.html -->
-
 <!DOCTYPE html>
 <html lang="en">
-
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interactive World Map</title>
+    <title>Top Artist Search</title>
 
-    <!-- Include the necessary CSS and JavaScript libraries for the world map -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-    {% load static %}
-
-    <!-- Your custom CSS (if any) -->
     <style>
-        #map {
-            height: 500px;
-        }
-
-        #info-panel {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background-color: white;
-            padding: 10px;
-            border: 1px solid #ccc;
+        body{
+            margin-left: 250px;
+            padding: 20px;
+            background-color: #353445;
+            color: #FFF9E8;
         }
     </style>
 </head>
 <body>
 
-<!-- Create a container for the map -->
-<div id="map"></div>
+    <!-- {% include 'navbar.html' %} -->
 
-<!-- Info panel to display data -->
-<div id="info-panel">
-    <h3>Country Information</h3>
-    <p id="country-info">Click on a country to see details</p>
-</div>
+    <h1>Top Artist Search</h1>
 
-<!-- Include the Leaflet.js library -->
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <form action="{% url 'world' %}" method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Search</button>
+    </form>
 
-<!-- GeoJSON data for world countries -->
-<script>
-    var map = L.map('map').setView([0, 0], 2);
+    {% if search_result %}
+        <div id="result">
+            {% for item in search_result %}
+                <h2>{{ item.0 }}</h2>
+                <p>Top Artist: {{ item.1 }}</p>
+                <p>Song Count: {{ item.2 }}</p>
+                <hr>
+            {% endfor %}
+        </div>
+    {% endif %}
 
-    // Load a tile layer (you may need to obtain an API key)
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
-    }).addTo(map);
-
-    function onCountryClick(e) {
-        console.log('Country clicked:', e.target.feature.properties.iso_a2);
-
-        var countryCode = e.target.feature.properties.iso_a2;
-
-        fetch('/world/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken')
-            },
-            body: JSON.stringify({ country_code: countryCode })
-        })
-        .then(response => response.json())
-        .then(data => {
-            console.log('Data received:', data);
-
-            var infoPanel = document.getElementById('info-panel');
-            var countryInfo = document.getElementById('country-info');
-            countryInfo.textContent = `Country: ${data.country}, Artist: ${data.artist}, Song Count: ${data.song_count}`;
-        });
-    }
-
-    // Load GeoJSON data for world countries
-    fetch('{% url "local_geojson" %}')
-    .then(response => response.json())
-    .then(data => {
-        // Add GeoJSON layer to the map
-        L.geoJson(data, {
-            onEachFeature: function(feature, layer) {
-                // Attach the click event to each country
-                layer.on({
-                    click: onCountryClick
-                });
-            }
-        }).addTo(map);
-    })
-    .catch(error => console.error(error));
-
-    // Function to get CSRF token from cookies
-    function getCookie(name) {
-        var cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            var cookies = document.cookie.split(';');
-            for (var i = 0; i < cookies.length; i++) {
-                var cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
-    }
-</script>
 </body>
 </html>

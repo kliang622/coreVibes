@@ -5,8 +5,8 @@ class ArtistByRegion(models.Model):
     artist = models.CharField(max_length=255)
     song_count = models.IntegerField()
 
-    def __str__(self):
-        return f'{self.artist} in {self.country}'
+    # def __str__(self):
+    #     return f'{self.artist} in {self.country}'
 
 
 class ArtistSentiment(models.Model):
