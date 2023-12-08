@@ -1,63 +1,112 @@
-<!-- world_map.html -->
+<!-- world.html -->
 
 <!DOCTYPE html>
 <html lang="en">
+
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Interactive World Map</title>
-    <!-- Leaflet CSS -->
+
+    <!-- Include the necessary CSS and JavaScript libraries for the world map -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-    <!-- Leaflet JavaScript -->
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    {% load static %}
+
+    <!-- Your custom CSS (if any) -->
     <style>
-        #world-map {
+        #map {
             height: 500px;
+        }
+
+        #info-panel {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: white;
+            padding: 10px;
+            border: 1px solid #ccc;
         }
     </style>
 </head>
 <body>
 
-    {% include 'navbar.html' %}
-    
-    <div id="world-map"></div>
-    <div id="country-info"></div>
+<!-- Create a container for the map -->
+<div id="map"></div>
 
-    <script>
-        const countriesData = JSON.parse('{{ countries|safe }}');  // Convert Django QuerySet to JavaScript object
+<!-- Info panel to display data -->
+<div id="info-panel">
+    <h3>Country Information</h3>
+    <p id="country-info">Click on a country to see details</p>
+</div>
 
-        const map = L.map('world-map').setView([0, 0], 2);  // Initial view
+<!-- Include the Leaflet.js library -->
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors'
-        }).addTo(map);
+<!-- GeoJSON data for world countries -->
+<script>
+    var map = L.map('map').setView([0, 0], 2);
 
-        // Add markers for each country
-        countriesData.forEach(country => {
-            const marker = L.marker([country.latitude, country.longitude])
-                .addTo(map)
-                .on('click', () => {
-                    // When a marker is clicked, send a request to Django to get data for the clicked country
-                    $.ajax({
-                        url: '/get_country_data/',
-                        method: 'GET',
-                        data: { country_id: country.id },
-                        success: (data) => {
-                            // Update the content of the #country-info div with the retrieved data
-                            $('#country-info').html(`
-                                <h2>Data for ${country.name}</h2>
-                                <p>Region: ${data.region}</p>
-                                <p>Field 1: ${data.field1}</p>
-                                <p>Field 2: ${data.field2}</p>
-                            `);
-                        },
-                        error: (error) => {
-                            console.error('Error fetching country data:', error);
-                        }
-                    });
-                });
+    // Load a tile layer (you may need to obtain an API key)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    function onCountryClick(e) {
+        console.log('Country clicked:', e.target.feature.properties.iso_a2);
+
+        var countryCode = e.target.feature.properties.iso_a2;
+
+        fetch('/world/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ country_code: countryCode })
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Data received:', data);
+
+            var infoPanel = document.getElementById('info-panel');
+            var countryInfo = document.getElementById('country-info');
+            countryInfo.textContent = `Country: ${data.country}, Artist: ${data.artist}, Song Count: ${data.song_count}`;
         });
-    </script>
+    }
+
+    // Load GeoJSON data for world countries
+    fetch('{% url "local_geojson" %}')
+    .then(response => response.json())
+    .then(data => {
+        // Add GeoJSON layer to the map
+        L.geoJson(data, {
+            onEachFeature: function(feature, layer) {
+                // Attach the click event to each country
+                layer.on({
+                    click: onCountryClick
+                });
+            }
+        }).addTo(map);
+    })
+    .catch(error => console.error(error));
+
+    // Function to get CSRF token from cookies
+    function getCookie(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+</script>
 </body>
 </html>

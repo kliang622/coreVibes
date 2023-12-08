@@ -1,5 +1,4 @@
 from django.shortcuts import render
-from .models import Marker
 from django.http import HttpResponse
 import mysql.connector
 
@@ -17,6 +16,12 @@ import math
 from .models import TimelineArtist, TimelineSong
 from django.conf import settings
 from django.conf.urls.static import static
+
+# world
+from .models import ArtistByRegion
+from django.views.decorators.csrf import csrf_exempt
+import json
+import os
 
 def home(request):
     return render(request, 'home.html')
@@ -52,60 +57,66 @@ def season(request):
                                                             'winter_data': winter_data})
 
 
-# def world(request):
-#     db_connection = mysql.connector.connect(user="hpham", password="halpal")
-#     db_cursor = db_connection.cursor()
-#     db_cursor.execute("USE cs179g;")
+def proxy_geojson(request):
+    url = 'https://naciscdn.org/naturalearth/110m/cultural/ne_110m_admin_0_countries.geojson'
+    response = requests.get(url)
+    data = response.json()
+    return JsonResponse(data)
 
-#     country_id = "United States"  # Replace this with the actual country or parameter you want
+def local_geojson(request):
+    geojson_path = os.path.join(os.path.dirname(__file__), 'static', 'geojson', 'ne_110m_admin_0_countries.geojson')
 
-#     query = "SELECT * FROM ArtistByRegion WHERE region = %s;"
-#     db_cursor.execute(query, (country_id,))
-    
-#     country_data = db_cursor.fetchone()
+    with open(geojson_path, 'r') as f:
+        data = json.load(f)
 
-#     if country_data:
-#         # Adjust this part based on the actual structure of your data
-#         response_data = {
-#             'region': country_data[0],
-#             'field1': country_data[1],
-#             'field2': country_data[2],
-#             # Add more fields as needed
-#         }
-#         return JsonResponse(response_data)
-#     else:
-#         return JsonResponse({'error': 'Country not found'}, status=404)
+    return JsonResponse(data)
 
+@csrf_exempt
 def world(request):
-    markers = Marker.objects.all()
-    return render(request, 'world.html', {'markers': markers})
+    response_data = {'error': 'No data found for the specified country'}  # Initialize with a default value
+
+    if request.method == 'POST':
+        country_code = request.POST.get('country_code')
+
+        db_connection = mysql.connector.connect(user="hpham", password="halpal", database="cs179g")
+        db_cursor = db_connection.cursor()
+
+        db_cursor.execute("SELECT * FROM ArtistByRegion WHERE country = %s", (country_code,))
+        row = db_cursor.fetchone()
+
+        if row:
+            response_data = {
+                'country': row[0],
+                'artist': row[1],
+                'song_count': row[2],
+            }
+            return JsonResponse(response_data)
+        else:
+            return JsonResponse(response_data)
+
+    return render(request, "world.html", {'response_data': response_data})
 
 
 def calculate_sentiment_percentages(artists):
     positive_count = sum(artist.PositiveCount if artist.PositiveCount is not None and not math.isnan(artist.PositiveCount) and artist.PositiveCount != float('inf') else 0 for artist in artists)
-    negative_count = sum(artist.NegativeCount if artist.NegativeCount is not None else 0 for artist in artists)
+    
+    negative_count = sum(1 if artist.NegativeCount is None else artist.NegativeCount for artist in artists)
 
-    # if artist.NegativeCount is not None and not math.isnan(artist.NegativeCount) and artist.NegativeCount != float('inf') else 0 for artist in artists
+
     neutral_count = sum(artist.NeutralCount if artist.NeutralCount is not None and not math.isnan(artist.NeutralCount) and artist.NeutralCount != float('inf') else 0 for artist in artists)
+    
     total = positive_count + neutral_count + negative_count
 
     positive_percentage = (positive_count / total) * 100 if total != 0 else 0
     neutral_percentage = (neutral_count / total) * 100 if total != 0 else 0
     negative_percentage = (negative_count / total) * 100 if total != 0 else 0
 
-
-    print("Positive Percentage:", positive_count)
-    print("Neutral Percentage:", neutral_count)
-    print("Negative Percentage:", negative_count)
-
-
-    # After calculating sentiment percentages
     print("Positive Percentage:", positive_percentage)
     print("Neutral Percentage:", neutral_percentage)
     print("Negative Percentage:", negative_percentage)
 
-
     return positive_percentage, neutral_percentage, negative_percentage
+
 
 
 def search_artist(request):
@@ -130,6 +141,10 @@ def search_artist(request):
 
             # Print the artists list
             print("Artists List:", artists)
+
+            for artist in artists:
+                print(f"Artist: {artist.artist}, NegativeCount: {artist.NegativeCount}, Type: {type(artist.NegativeCount)}")
+
 
             # Implement sentiment analysis logic and prepare data for the pie chart
             positive_percentage, neutral_percentage, negative_percentage = calculate_sentiment_percentages(artists)
