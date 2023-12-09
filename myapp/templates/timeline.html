@@ -49,18 +49,18 @@
     </div>
 
     <div id="info-container">
-        <!-- Display top artist and song information here -->
+
     </div>
 
     <script>
         function displayInfo(year) {
-            // Hide all info containers
+ 
             var allInfoContainers = document.querySelectorAll('.info-container');
             allInfoContainers.forEach(function(container) {
                 container.style.display = 'none';
             });
 
-            // Display the info container for the selected year
+            
             var infoContainer = document.getElementById('info-container-' + year);
             infoContainer.style.display = 'block';
         }

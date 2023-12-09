@@ -69,12 +69,13 @@ def world(request):
             db_connection = mysql.connector.connect(user="hpham", password="halpal", database="cs179g")
             db_cursor = db_connection.cursor()
 
-            # Perform the search query
             query = (
                 "SELECT region, artist, MAX(song_count) AS max_song_count "
                 "FROM ArtistByRegion "
                 "WHERE region LIKE %s "
-                "GROUP BY region"
+                "GROUP BY region, artist "
+                "ORDER BY max_song_count DESC "
+                "LIMIT 3"
             )
             db_cursor.execute(query, ['%' + region_name + '%'])
             search_result = db_cursor.fetchall()
@@ -137,7 +138,6 @@ def search_artist(request):
                 print(f"Artist: {artist.artist}, NegativeCount: {artist.NegativeCount}, Type: {type(artist.NegativeCount)}")
 
 
-            # Implement sentiment analysis logic and prepare data for the pie chart
             positive_percentage, neutral_percentage, negative_percentage = calculate_sentiment_percentages(artists)
 
             # Print sentiment percentages
@@ -145,7 +145,6 @@ def search_artist(request):
             print("Neutral Percentage from function:", neutral_percentage)
             print("Negative Percentage from function:", negative_percentage)
 
-            # Render the template
             return render(request, 'sentiment.html', {
                 'artist_name': artist_name,
                 'positive_percentage': positive_percentage,
@@ -161,7 +160,7 @@ def timelineView(request):
     db_connection = mysql.connector.connect(user="hpham", password="halpal", database="cs179g")
     db_cursor = db_connection.cursor()
 
-    # Execute your SQL queries here
+
     querySong = "SELECT artist, title, TrendCount FROM HottestSongsPerYear WHERE year = %s ORDER BY TrendCount DESC LIMIT 1"
     queryArtist = """
         SELECT *
@@ -178,7 +177,7 @@ def timelineView(request):
         LIMIT 1; 
     """
 
-    years = range(2017, 2021)  
+    years = range(2017, 2022)  
 
     timeline_data = []
     for year in years:
